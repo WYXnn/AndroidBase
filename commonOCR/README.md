@@ -1,1 +1,0 @@
-布局内必须有一个SenseCameraPreview
