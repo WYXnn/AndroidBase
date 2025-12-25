@@ -1,0 +1,1 @@
+项目的gradle文件需要添加 maven { setUrl("https://maven.aliyun.com/repository/public/") }

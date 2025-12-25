@@ -1,3 +1,19 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
 # Gradle files
 .gradle/
 build/
@@ -32,3 +48,55 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# --- [ Android / IntelliJ ] ---
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/.idea/deploymentTargetDropDown.xml
+/.idea/shelf/
+/.idea/vcs.xml
+/captures
+.externalNativeBuild
+.cxx
+/google-services.json
+
+# --- [ Build Artifacts ] ---
+# 忽略所有模块下的 build 文件夹
+**/build/
+
+# 忽略生成的 APK, AAR, Bundle
+*.apk
+*.aar
+*.ap_
+*.aab
+*.dex
+
+# --- [ Kotlin / Java ] ---
+*.class
+/bin
+/gen
+
+# --- [ Signing Secrets (非常重要) ] ---
+# 不要把你的签名密钥传上去
+*.jks
+*.keystore
+*.p12
+*.key
+google-services.json
+
+# --- [ OS Specific ] ---
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.lock-wscript
+
+# --- [ Log Files ] ---
+*.log
