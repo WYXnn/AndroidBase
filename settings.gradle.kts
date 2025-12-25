@@ -1,5 +1,8 @@
 pluginManagement {
     repositories {
+        google()
+        mavenCentral() // 必须包含这个
+        gradlePluginPortal() // 插件门户
         maven {
             setUrl("https://jitpack.io")
             content {
@@ -22,6 +25,9 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
+        google()
+        mavenCentral() // 必须包含这个
+        gradlePluginPortal() // 插件门户
         maven {
             setUrl("https://jitpack.io")
             content {
