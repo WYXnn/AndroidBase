@@ -39,7 +39,6 @@ class MainActivity : AppCompatActivity() {
             ExampleActivity.start(this)
         }
 
-        MonitorManager.getInstance().init(this,"0eba8083-3ab0-45d2-b40f-cf5cda14140f","https://br.unicompayment.com/config","6.0.0","WOPAY_CHANNEL_VALUE")
 
 
     }

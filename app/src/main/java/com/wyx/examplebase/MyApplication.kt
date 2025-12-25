@@ -10,6 +10,6 @@ class MyApplication : BaseApplication() {
     override fun onCreate() {
         super.onCreate()
 
-        CommonLog.init(true)
+//        CommonLog.init(true)
     }
 }
