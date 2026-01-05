@@ -1,107 +1,405 @@
-基于 apollo-kotlin 的轻量级封装库，旨在简化 Android 端 GraphQL 的开发流程。它内置了二级缓存（内存+SQLite）和智能离线降级策略，让你专注于业务逻辑而非底层网络配置。
-1. 环境配置 (Gradle)在使用此库的主 App 模块（app/build.gradle.kts）中，需要配置 Apollo 插件和相关依赖。1.1 应用插件plugins {
-id("com.android.application")
-id("org.jetbrains.kotlin.android")
-// Apollo 插件，用于根据 .graphql 文件生成 Java/Kotlin 代码
-id("com.apollographql.apollo3") version "3.8.2"
-}
-1.2 添加依赖dependencies {
-// 引入 commonConfigApollo 库 (假设已导入模块或 aar)
+# commonConfigApollo
+
+GraphQL配置管理模块，基于Apollo GraphQL提供现代化的远程配置获取和管理功能。
+
+## 功能概述
+
+本模块使用Apollo GraphQL客户端提供类型安全的配置管理，支持GraphQL查询、订阅和缓存机制，提供比传统REST API更高效的配置获取方式。
+
+## 依赖说明
+
+在app模块的build.gradle.kts中添加：
+
+```kotlin
 implementation(project(":commonConfigApollo"))
+
+环境配置 (Gradle)在使用此库的主 App 模块（app/build.gradle.kts）中，需要配置 Apollo 插件和相关依赖。1.1 应用插件plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    // Apollo 插件，用于根据 .graphql 文件生成 Java/Kotlin 代码
+    id("com.apollographql.apollo3") version "3.8.2"
 
     // Apollo 运行时 (必须与插件版本一致)
     implementation("com.apollographql.apollo3:apollo-runtime:3.8.2")
-    
+
     // SQLite 缓存支持 (commonConfigApollo 内部依赖此库，建议显式添加以防冲突)
     implementation("com.apollographql.apollo3:apollo-normalized-cache-sqlite:3.8.2")
-}
-1.3 配置 Apollo 包名apollo {
-// 生成的 Query 类所在的包名
-packageName.set("com.example.yourapp.graphql")
 
-    // (可选) 指定 schema 文件位置，默认为 src/main/graphql
-    // service("service") {
-    //     srcDir("src/main/graphql")
-    // }
-}
-2. 准备 GraphQL 文件在 src/main/graphql/ 目录下放置你的 schema.json (或 schema.graphqls) 和查询文件。示例文件结构：src/main/graphql/
-   ├── schema.json               // 从服务器下载的 Schema
-   └── UserQuery.graphql         // 你的查询语句
-   示例 UserQuery.graphql:query UserProfile($userId: ID!) {
-   user(id: $userId) {
-   id
-   name
-   avatar
-   email
-   }
-   }
-   注意：添加或修改 .graphql 文件后，请执行 Build -> Rebuild Project 以生成对应的 Kotlin 类（例如 UserProfileQuery）。3. 初始化库建议在自定义的 Application 类中进行全局初始化。class MyApplication : Application() {
-   override fun onCreate() {
-   super.onCreate()
+    配置 Apollo 包名apollo {
+    // 生成的 Query 类所在的包名 
+    packageName.set("com.example.yourapp.graphql")
 
-        // 配置 commonConfigApollo
-        val config = ApolloConfig(
-            serverUrl = "[https://api.example.com/graphql](https://api.example.com/graphql)",
+```
+
+## 使用方式
+
+### 1. 初始化Apollo客户端
+
+```kotlin
+class MyApplication : Application() {
+    
+    override fun onCreate() {
+        super.onCreate()
+        
+        ConfigApolloManager.init(
             context = this,
-            // 可选配置
-            dbName = "app_cache.db",           // 数据库名
-            memoryCacheSize = 5 * 1024 * 1024, // 内存缓存 5MB
-            connectTimeoutSeconds = 15,        // 连接超时
-            headers = mapOf(
-                "Authorization" to "Bearer YOUR_TOKEN",
-                "User-Agent" to "Android-App"
-            )
+            serverUrl = "https://api.example.com/graphql",
+            apiKey = "your_api_key"
         )
+    }
+}
+```
 
-        ConfigApolloManager.initialize(config)
-   }
-   }
-4. 发起查询 (ViewModel/Repository)commonConfigApollo 的核心方法是 query()，它是一个挂起函数 (suspend)，需要在协程中调用。它会自动处理网络请求和缓存回退。示例代码import androidx.lifecycle.ViewModel
+### 2. 基本配置查询
 
-class UserViewModel : ViewModel() {
+```kotlin
+// 查询应用配置
+val query = GetAppConfigQuery()
+ConfigApolloManager.query(query) { result ->
+    when (result) {
+        is ApolloResponse.Success -> {
+            val config = result.data?.appConfig
+            config?.let {
+                // 使用配置数据
+                val appName = it.name
+                val version = it.version
+                val features = it.features
+            }
+        }
+        is ApolloResponse.Failure -> {
+            Log.e("ApolloConfig", "Query failed", result.exception)
+        }
+    }
+}
+```
 
-    fun loadUserData(userId: String) {
-        viewModelScope.launch {
-            // 1. 创建查询对象 (由 Apollo 插件生成)
-            val query = UserProfileQuery(userId = userId)
+### 3. 带参数的配置查询
 
-            // 2. 调用 ConfigApolloManager
-            val result = ConfigApolloManager.query(query)
+```kotlin
+// 根据用户类型查询配置
+val query = GetFeatureFlagsQuery(
+    userType = "premium",
+    platform = "android"
+)
 
-            // 3. 处理结果
-            when (result) {
-                is ApolloResult.Success -> {
-                    val data = result.data // 类型安全，自动推导为 UserProfileQuery.Data
-                    val isCached = result.isFromCache
-                    
-                    if (isCached) {
-                        println("当前无网络，显示缓存数据")
-                    }
-                    
-                    // 更新 UI
-                    updateUI(data.user)
+ConfigApolloManager.query(query) { result ->
+    when (result) {
+        is ApolloResponse.Success -> {
+            val features = result.data?.featureFlags
+            features?.forEach { feature ->
+                Log.d("Feature", "${feature.name}: ${feature.enabled}")
+            }
+        }
+        is ApolloResponse.Failure -> {
+            // 处理错误
+        }
+    }
+}
+```
+
+### 4. 配置订阅（实时更新）
+
+```kotlin
+// 订阅配置变化
+val subscription = ConfigUpdatedSubscription()
+
+val job = ConfigApolloManager.subscribe(subscription) { result ->
+    when (result) {
+        is ApolloResponse.Success -> {
+            val updatedConfig = result.data?.configUpdated
+            updatedConfig?.let {
+                // 处理配置更新
+                updateLocalConfig(it)
+            }
+        }
+        is ApolloResponse.Failure -> {
+            Log.e("ApolloConfig", "Subscription failed", result.exception)
+        }
+    }
+}
+
+// 取消订阅
+job.cancel()
+```
+
+### 5. 缓存配置管理
+
+```kotlin
+// 启用缓存
+ConfigApolloManager.enableCache(true)
+
+// 设置缓存过期时间
+ConfigApolloManager.setCacheTimeout(5 * 60 * 1000L) // 5分钟
+
+// 清除缓存
+ConfigApolloManager.clearCache()
+
+// 仅从缓存获取
+ConfigApolloManager.queryFromCache(query) { result ->
+    // 处理缓存结果
+}
+```
+
+## GraphQL Schema定义
+
+### 配置查询示例
+
+```graphql
+# 获取应用配置
+query GetAppConfig {
+  appConfig {
+    name
+    version
+    features {
+      name
+      enabled
+      parameters {
+        key
+        value
+      }
+    }
+  }
+}
+
+# 获取功能开关
+query GetFeatureFlags($userType: String!, $platform: String!) {
+  featureFlags(userType: $userType, platform: $platform) {
+    name
+    enabled
+    rolloutPercentage
+  }
+}
+
+# 配置更新订阅
+subscription ConfigUpdated {
+  configUpdated {
+    id
+    name
+    value
+    updatedAt
+  }
+}
+```
+
+## 配置参数说明
+
+### ApolloClient配置
+
+```kotlin
+ConfigApolloManager.configure(
+    serverUrl: String,
+    apiKey: String? = null,
+    timeout: Long = 30_000L,
+    enableCache: Boolean = true,
+    cacheMaxSize: Long = 10 * 1024 * 1024, // 10MB
+    enableLogging: Boolean = BuildConfig.DEBUG
+)
+```
+
+### HTTP Headers配置
+
+```kotlin
+ConfigApolloManager.addHttpHeader("Authorization", "Bearer $token")
+ConfigApolloManager.addHttpHeader("User-Agent", "MyApp/1.0")
+```
+
+## 数据模型
+
+### Apollo生成的类型
+
+Apollo会根据GraphQL schema自动生成对应的Kotlin类型：
+
+```kotlin
+// 自动生成的查询类型
+class GetAppConfigQuery : GraphQLQuery() {
+    override fun variables(): Map<String, Any?> = emptyMap()
+}
+
+// 自动生成的数据类型
+data class AppConfig(
+    val name: String?,
+    val version: String?,
+    val features: List<Feature?>?
+)
+
+data class Feature(
+    val name: String?,
+    val enabled: Boolean?,
+    val parameters: List<Parameter?>?
+)
+```
+
+## 高级功能
+
+### 1. 乐观更新
+
+```kotlin
+// 乐观更新配置
+val mutation = UpdateConfigMutation(
+    input = ConfigInput(name = "new_feature", value = "enabled")
+)
+
+// 先更新本地UI，再发送到服务器
+ConfigApolloManager.optimisticUpdate(
+    mutation = mutation,
+    optimisticResponse = UpdateConfigMutation.Data(
+        updateConfig = Config(
+            id = "temp_id",
+            name = "new_feature",
+            value = "enabled"
+        )
+    )
+) { result ->
+    // 处理最终结果
+}
+```
+
+### 2. 重试机制
+
+```kotlin
+// 配置重试策略
+ConfigApolloManager.setRetryPolicy(
+    maxRetries = 3,
+    backoffMultiplier = 2.0,
+    initialDelay = 1000L
+)
+```
+
+### 3. 网络状态监控
+
+```kotlin
+// 监控网络状态
+ConfigApolloManager.setNetworkStatusListener { isConnected ->
+    if (isConnected) {
+        // 网络恢复，重新同步配置
+        syncConfig()
+    }
+}
+```
+
+## 错误处理
+
+### GraphQL错误处理
+
+```kotlin
+ConfigApolloManager.query(query) { result ->
+    when (result) {
+        is ApolloResponse.Success -> {
+            // 处理成功响应
+            handleSuccess(result.data)
+        }
+        is ApolloResponse.Failure -> {
+            when (result.exception) {
+                is ApolloNetworkException -> {
+                    // 网络错误
+                    handleNetworkError(result.exception)
                 }
-
-                is ApolloResult.Error -> {
-                    // 处理错误 (网络错误且无缓存，或服务器返回 GraphQL Error)
-                    val errorMsg = result.message
-                    val exception = result.exception
-                    println("加载失败: $errorMsg")
+                is ApolloHttpException -> {
+                    // HTTP错误
+                    handleHttpError(result.exception)
+                }
+                is ApolloParseException -> {
+                    // 解析错误
+                    handleParseError(result.exception)
                 }
             }
         }
     }
 }
-5. 高级功能5.1 数据预取 (Prefetch)如果你想在用户进入某个页面前提前加载数据（例如在列表页预加载详情页数据），可以使用 prefetch。它只下载并写入缓存，不返回数据。viewModelScope.launch {
-   ConfigApolloManager.prefetch(UserProfileQuery(userId = "123"))
-   }
-   5.2 清理缓存当用户退出登录时，务必清理缓存，防止数据泄露。fun logout() {
-   viewModelScope.launch {
-   ConfigApolloManager.clearCache()
-   // 执行其他登出逻辑...
-   }
-   }
-   5.3 获取原始 Client如果库封装的功能无法满足特殊需求（例如 Mutation 上传文件、Subscription 订阅），你可以获取底层的 ApolloClient 自行操作。val rawClient = ConfigApolloManager.getClient()
-   // rawClient.mutation(...)
-   // rawClient.subscription(...)
-6. 缓存策略原理当你调用 ConfigApolloManager.query(query) 时，内部逻辑如下：NetworkFirst: 尝试从网络请求数据。成功: 返回数据，并自动保存到内存和 SQLite 数据库。失败 (断网/超时): 捕获异常，进入第 2 步。CacheOnly: 尝试从本地缓存读取。命中: 返回缓存数据，标记 isFromCache = true。未命中: 返回 ApolloResult.Error，提示网络错误且无缓存。这种策略确保了用户在有网时看到最新内容，断网时看到最后一次成功加载的内容。
+```
+
+### GraphQL错误信息
+
+```kotlin
+// 访问GraphQL错误信息
+if (result is ApolloResponse.Success) {
+    val errors = result.errors
+    errors?.forEach { error ->
+        Log.e("GraphQL", "Error: ${error.message}")
+        // 处理特定的GraphQL错误
+        when (error.extensions?.get("code")) {
+            "CONFIG_NOT_FOUND" -> handleConfigNotFound()
+            "INVALID_PARAMETER" -> handleInvalidParameter()
+        }
+    }
+}
+```
+
+## 性能优化
+
+### 1. 查询优化
+
+```kotlin
+// 只查询需要的字段
+val optimizedQuery = GetMinConfigQuery() {
+    // 只查询必要的字段，减少网络传输
+    name
+    version
+}
+
+// 字段别名
+val queryWithAlias = GetConfigWithAliasQuery {
+    appName: name
+    appVersion: version
+}
+```
+
+### 2. 批量查询
+
+```kotlin
+// 一次请求获取多个配置
+val batchQuery = GetBatchConfigQuery(
+    configIds = listOf("feature1", "feature2", "feature3")
+)
+```
+
+### 3. 本地缓存策略
+
+```kotlin
+// 设置不同的缓存策略
+ConfigApolloManager.setCachePolicy(
+    queryPolicy = CachePolicy.CacheFirst,      // 查询优先使用缓存
+    mutationPolicy = CachePolicy.NetworkOnly, // 变更强制网络请求
+    subscriptionPolicy = CachePolicy.NetworkOnly // 订阅强制网络请求
+)
+```
+
+## 注意事项
+
+1. 必须在使用前调用init方法初始化Apollo客户端
+2. GraphQL schema变更后需要重新生成类型
+3. 网络请求需要在后台线程执行
+4. 缓存会占用内存，需要合理设置缓存大小
+5. 订阅需要在适当时机取消以避免内存泄漏
+
+## 构建配置
+
+### Gradle配置
+
+```kotlin
+// 在build.gradle.kts中添加Apollo插件
+plugins {
+    id("com.apollographql.apollo3") version "3.8.2"
+}
+
+// Apollo配置
+apollo {
+    service("service") {
+        packageName.set("com.example.app.apollo")
+        schemaFile.set(file("src/main/graphql/schema.graphqls"))
+    }
+}
+```
+
+## 版本要求
+
+- Android API Level: 21+
+- Apollo Kotlin: 3.8.0+
+- Kotlin Coroutines: 1.6.0+
+
+## 权限要求
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+```
