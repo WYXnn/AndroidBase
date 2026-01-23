@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.wyx.examplebase.eventbus.EventBusUtil
 import com.wyx.examplebase.eventbus.RegisterEventBus
-import com.wyx.commonnet.viewmodel.BaseViewModel
+import com.wyx.examplebase.viewmodel.BaseViewModel
 
 abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel> : Fragment() {
 

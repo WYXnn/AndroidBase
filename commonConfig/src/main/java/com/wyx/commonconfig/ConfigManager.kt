@@ -1,9 +1,9 @@
 package com.wyx.commonconfig
 
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wyx.commonconfig.entity.IConfigRequest
 import com.wyx.commonconfig.repository.ConfigRepository
-import com.wyx.commonnet.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,7 +15,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class ConfigManager @Inject constructor(private val mRepo: ConfigRepository) : BaseViewModel() {
+class ConfigManager @Inject constructor(private val mRepo: ConfigRepository) : ViewModel() {
 
     private var mNameSpace : String = ""
     private var mNeedLoop = false

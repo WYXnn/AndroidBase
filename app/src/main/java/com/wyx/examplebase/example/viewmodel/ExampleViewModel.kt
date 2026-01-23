@@ -2,7 +2,7 @@ package com.wyx.examplebase.example.viewmodel
 
 import com.wyx.examplebase.example.repository.ExampleRepository
 import com.wyx.examplebase.ktx.launchIO
-import com.wyx.commonnet.viewmodel.BaseViewModel
+import com.wyx.examplebase.viewmodel.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

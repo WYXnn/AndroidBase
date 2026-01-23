@@ -59,7 +59,6 @@ dependencies {
     api("androidx.test.ext:junit:1.2.1")
     api("androidx.test.espresso:espresso-core:3.6.1")
 
-    api(project(":commonNet"))
 
     api("org.greenrobot:eventbus:3.3.1")
 

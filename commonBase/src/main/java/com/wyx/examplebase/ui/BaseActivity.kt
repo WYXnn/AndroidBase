@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.viewbinding.ViewBinding
 import com.wyx.examplebase.eventbus.EventBusUtil
 import com.wyx.examplebase.eventbus.RegisterEventBus
-import com.wyx.commonnet.viewmodel.BaseViewModel
+import com.wyx.examplebase.viewmodel.BaseViewModel
 
 abstract class BaseActivity<VB : ViewBinding, VM : BaseViewModel> : AppCompatActivity() {
 
