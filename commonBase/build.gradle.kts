@@ -51,6 +51,7 @@ dependencies {
     api("androidx.core:core-ktx:1.17.0")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    api("androidx.fragment:fragment-ktx:1.6.2")
     api("androidx.appcompat:appcompat:1.7.1")
     api("com.google.android.material:material:1.13.0")
     api("androidx.activity:activity:1.10.1")
