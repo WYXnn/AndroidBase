@@ -10,7 +10,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 23
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -40,7 +40,7 @@ android {
     }
 }
 
-apply(from = "../publish-config.gradle.kts")
+//apply(from = "../publish-config.gradle.kts")
 
 dependencies {
 

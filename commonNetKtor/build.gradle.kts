@@ -1,6 +1,6 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("de.jensklingenberg.ktorfit") version "2.6.5"
 
@@ -11,7 +11,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        minSdk = 24
+        minSdk = 23
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -41,7 +41,7 @@ android {
     }
 }
 
-apply(from = "../publish-config.gradle.kts")
+//apply(from = "../publish-config.gradle.kts")
 
 dependencies {
 
